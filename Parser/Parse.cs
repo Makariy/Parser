@@ -1,38 +1,35 @@
-﻿using Parser.Properties;
-using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.IO;
 using System.Net;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace Parser
 {
     class Parse
     {
-        private IParseSettings settings;
+        private IParseSettings m_Settings;
 
-        private int nowpagecounter ;
-        private string NewUri { get; set; }
-        private List<string> PageTitles = new List<string>();
-        private string[] Uris;
+        private int m_NowPageCounter;
+        private string m_NewUri { get; set; }
+        private List<string> m_PageTitles = new List<string>();
+        private string[] m_Uris;
         public Parse(IParseSettings settings)
         {
-            this.settings = settings;
-            this.nowpagecounter = settings.PageStartIndex - 1;
-            Uris = new string[settings.PageEndIndex];
-            Uris[0] = settings.Uri;
-            for (int i = settings.PageStartIndex-1; i < Uris.Length; i++)
+            this.m_Settings = settings;
+            this.m_NowPageCounter = settings.PageStartIndex - 1;
+            m_Uris = new string[settings.PageEndIndex];
+            m_Uris[0] = settings.Uri;
+            for (int i = settings.PageStartIndex-1; i < m_Uris.Length; i++)
             {
-                Uris[i] = FindNewUri();
+                m_Uris[i] = FindNewUri();
             }
         }
         public List<string> StartParse()
         {
 
-            Parallel.For(settings.PageStartIndex-1, this.Uris.Length, this._StartParse);
+            Parallel.For(m_Settings.PageStartIndex-1, this.m_Uris.Length, this._StartParse);
             WriteTitlesToFile();
-            return this.PageTitles;
+            return this.m_PageTitles;
         }
         private void WriteTitlesToFile()
         {
@@ -42,7 +39,7 @@ namespace Parser
             {
                 _fileStream = new FileStream("text.txt", FileMode.OpenOrCreate);
                 _fileWriter = new StreamWriter(_fileStream);
-                foreach (string _str in this.PageTitles)
+                foreach (string _str in this.m_PageTitles)
                 {
                     _fileWriter.WriteLine(_str);
                 }
@@ -59,7 +56,7 @@ namespace Parser
         }
         private void _StartParse(int num)
         {
-            string uri = this.Uris[num];
+            string uri = this.m_Uris[num];
 
             HttpWebRequest request = null;
             HttpWebResponse response = null;
@@ -73,8 +70,8 @@ namespace Parser
             }
             catch(WebException exc)
             {
-                this.PageTitles.Add("");
-                this.PageTitles.Add("Next page not Found");
+                this.m_PageTitles.Add("");
+                this.m_PageTitles.Add("Next page not Found");
                 return;
             }
             
@@ -93,13 +90,13 @@ namespace Parser
             string _str;
             while (_endnum != -1)
             {
-                _startnum = htmlstr.IndexOf(settings.PageClass, _lastnum) + 1;
+                _startnum = htmlstr.IndexOf(m_Settings.PageClass, _lastnum) + 1;
                 if (_startnum - 1 == -1) break;
                 _startnum = htmlstr.IndexOf(">", _startnum) + 1;
                 _endnum = htmlstr.IndexOf("<", _startnum);
                 _str = htmlstr.Substring(_startnum, _endnum - _startnum);
                 _str = RaiseSpan(_str);
-                this.PageTitles.Add(_str);
+                this.m_PageTitles.Add(_str);
                 _lastnum = _endnum;
             }
         }
@@ -122,8 +119,8 @@ namespace Parser
         }
         private string FindNewUri()
         {
-            this.nowpagecounter++;
-            return settings.Uri + "/ru/page" + this.nowpagecounter + "/";
+            this.m_NowPageCounter++;
+            return m_Settings.Uri + "/ru/page" + this.m_NowPageCounter + "/";
         }
     } 
 }

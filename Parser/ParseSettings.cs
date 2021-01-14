@@ -1,7 +1,4 @@
-﻿using System;
-
-
-namespace Parser
+﻿namespace Parser
 {
     interface IParseSettings
     {
